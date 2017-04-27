@@ -52,7 +52,7 @@ set(config_module_list
 	modules/commander
 	modules/load_mon
 	modules/navigator
-	modules/mavlink
+    #modules/mavlink
 	modules/land_detector
 
 	#
@@ -75,7 +75,7 @@ set(config_module_list
 	#
 	# Logging
 	#
-	modules/logger
+    #modules/logger
 
 	#
 	# Library modules
@@ -105,6 +105,9 @@ set(config_module_list
 	lib/DriverFramework/framework
 	lib/rc
 	platforms/nuttx
+    lib/micro-CDR
+
+    examples/rtps
 
 	# had to add for cmake, not sure why wasn't in original config
 	platforms/common
