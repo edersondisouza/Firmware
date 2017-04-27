@@ -1,0 +1,100 @@
+CPP= g++
+CPPFLAGS = -c -Wall -fpic -m64 -O2 -std=c++0x
+LN= g++
+AR=ar
+LDFLAGS= -m64
+SYSLIBS= -ldl -lnsl -lm -lpthread -lrt
+DEFINES= 
+
+INCLUDES= -I. -I$(FASTRTPSHOME)/include
+
+LIBS = -L$(FASTRTPSHOME)/lib -L$(FASTRTPSHOME)/lib/x64Linux2.6gcc -lfastcdr -lfastrtps $(SYSLIBS)
+
+DIRECTORIES= output.dir output/x64Linux2.6gcc.dir lib.dir lib/x64Linux2.6gcc.dir bin.dir bin/x64Linux2.6gcc.dir
+
+all: $(DIRECTORIES) vehicle_command_ vehicle_command_PublisherSubscriber \
+	vehicle_status_ vehicle_status_PublisherSubscriber
+
+
+vehicle_command__TARGET= lib/x64Linux2.6gcc/libvehicle_command_.so
+vehicle_command__TARGET_Z= lib/x64Linux2.6gcc/libvehicle_command_.a
+
+vehicle_command__CLIENT_EXAMPLE_TARGET= bin/x64Linux2.6gcc/vehicle_command_PublisherSubscriber
+vehicle_command__COMMON_SRC_CXXFILES = vehicle_command_.cxx
+
+vehicle_command__COMMON_SRC_CPPFILES=
+
+vehicle_command__CLIENTSOURCES = vehicle_command_PubSubTypes.cxx \
+	vehicle_command_Publisher.cxx \
+	vehicle_command_Subscriber.cxx \
+	vehicle_command_PubSubMain.cxx
+
+vehicle_command__COMMONOBJS    = $(vehicle_command__COMMON_SRC_CXXFILES:%.cxx=output/x64Linux2.6gcc/%.o) $(vehicle_command__COMMON_SRC_CPPFILES:%.cpp=output/x64Linux2.6gcc/%.o)
+
+vehicle_command__CLIENTOBJS    = $(vehicle_command__CLIENTSOURCES:%.cxx=output/x64Linux2.6gcc/%.o)
+
+vehicle_command_OBJS+= $(vehicle_command__COMMONOBJS) $(vehicle_command__CLIENTOBJS)
+OBJS+= $(vehicle_command_OBJS)
+
+$(vehicle_command__TARGET): $(vehicle_command__COMMONOBJS)
+	$(LN) $(LDFLAGS) -shared -o $(vehicle_command__TARGET) $(vehicle_command__COMMONOBJS) $(LIBS) -Llib/x64Linux2.6gcc 
+
+$(vehicle_command__TARGET_Z): $(vehicle_command__COMMONOBJS)
+	$(AR) -cru $(vehicle_command__TARGET_Z) $(vehicle_command__COMMONOBJS)
+
+$(vehicle_command__CLIENT_EXAMPLE_TARGET): $(vehicle_command_OBJS) lib/x64Linux2.6gcc/libvehicle_command_.a 
+	$(LN) $(LDFLAGS) -o $@ $(vehicle_command_OBJS) -Wl,-Bstatic -Llib/x64Linux2.6gcc -lvehicle_command_  -Wl,-Bdynamic $(LIBS)
+
+vehicle_command_PublisherSubscriber : $(vehicle_command__CLIENT_EXAMPLE_TARGET)
+vehicle_command_: $(vehicle_command__TARGET) $(vehicle_command__TARGET_Z) vehicle_command_PublisherSubscriber
+
+vehicle_status__TARGET= lib/x64Linux2.6gcc/libvehicle_status_.so
+vehicle_status__TARGET_Z= lib/x64Linux2.6gcc/libvehicle_status_.a
+
+vehicle_status__CLIENT_EXAMPLE_TARGET= bin/x64Linux2.6gcc/vehicle_status_PublisherSubscriber
+vehicle_status__COMMON_SRC_CXXFILES = vehicle_status_.cxx
+
+vehicle_status__COMMON_SRC_CPPFILES=
+
+vehicle_status__CLIENTSOURCES = vehicle_status_PubSubTypes.cxx \
+	vehicle_status_Publisher.cxx \
+	vehicle_status_Subscriber.cxx \
+	vehicle_status_PubSubMain.cxx
+
+vehicle_status__COMMONOBJS    = $(vehicle_status__COMMON_SRC_CXXFILES:%.cxx=output/x64Linux2.6gcc/%.o) $(vehicle_status__COMMON_SRC_CPPFILES:%.cpp=output/x64Linux2.6gcc/%.o)
+
+vehicle_status__CLIENTOBJS    = $(vehicle_status__CLIENTSOURCES:%.cxx=output/x64Linux2.6gcc/%.o)
+
+vehicle_status_OBJS+= $(vehicle_status__COMMONOBJS) $(vehicle_status__CLIENTOBJS)
+OBJS+= $(vehicle_status_OBJS)
+
+$(vehicle_status__TARGET): $(vehicle_status__COMMONOBJS)
+	$(LN) $(LDFLAGS) -shared -o $(vehicle_status__TARGET) $(vehicle_status__COMMONOBJS) $(LIBS) -Llib/x64Linux2.6gcc 
+
+$(vehicle_status__TARGET_Z): $(vehicle_status__COMMONOBJS)
+	$(AR) -cru $(vehicle_status__TARGET_Z) $(vehicle_status__COMMONOBJS)
+
+$(vehicle_status__CLIENT_EXAMPLE_TARGET): $(vehicle_status_OBJS) lib/x64Linux2.6gcc/libvehicle_status_.a 
+	$(LN) $(LDFLAGS) -o $@ $(vehicle_status_OBJS) -Wl,-Bstatic -Llib/x64Linux2.6gcc -lvehicle_status_  -Wl,-Bdynamic $(LIBS)
+
+vehicle_status_PublisherSubscriber : $(vehicle_status__CLIENT_EXAMPLE_TARGET)
+vehicle_status_: $(vehicle_status__TARGET) $(vehicle_status__TARGET_Z) vehicle_status_PublisherSubscriber
+
+output/x64Linux2.6gcc/%.o:%.cxx
+	$(CPP) $(CPPFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+output/x64Linux2.6gcc/%.o:%.cpp
+	$(CPP) $(CPPFLAGS) $(INCLUDES) $(DEFINES) -c $< -o $@
+
+.PHONY: vehicle_command_ vehicle_command_PublisherSubscriber \
+	vehicle_status_ vehicle_status_PublisherSubscriber
+
+clean:
+	@rm -f $(OBJS)
+
+%.dir : 
+	@echo "Checking directory $*"
+	@if [ ! -d $* ]; then \
+		echo "Making directory $*"; \
+		mkdir -p $* ; \
+	fi;

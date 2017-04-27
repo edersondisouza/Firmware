@@ -1,0 +1,7 @@
+struct vehicle_command_ack_
+{
+	unsigned long long timestamp;
+	unsigned short command;
+	octet result;
+
+}; // struct vehicle_command_ack_
