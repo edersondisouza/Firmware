@@ -30,6 +30,7 @@ void handle_vehicle_command(struct reader_data *reader_data, char *buffer);
 extern "C" __EXPORT int rtps_main(int argc, char *argv[]);
 
 static int _started = 0;
+static bool _should_exit_task = false;
 
 struct reader_data {
     UART_node &uart_node;
@@ -41,6 +42,11 @@ void handle_vehicle_command(struct reader_data *reader_data, char *buffer)
     struct vehicle_command_s vehicle_command_data;
 
     deserialize_vehicle_command(&vehicle_command_data, buffer);
+
+    if (vehicle_command_data.command == vehicle_command_s::VEHICLE_CMD_PREFLIGHT_REBOOT_SHUTDOWN) {
+        _should_exit_task = true;
+    }
+
     orb_publish(ORB_ID(vehicle_command), reader_data->vehicle_command_pub, &vehicle_command_data);
 }
 
@@ -55,7 +61,7 @@ void *uart_reader_thread(void *data)
     uint8_t len;
 
     char topic_ID = 255;
-    while (true) {
+    while (!_should_exit_task) {
         if (poll(&fds[0], 1, 1000) > 0) {
             uint8_t seq;
             if ((len = reader_data->uart_node.readFromUART(&topic_ID, &seq, buffer)) != 0) {
@@ -157,7 +163,7 @@ int _rtps_main(int argc, char *argv[])
 
     /* Sender loop */
     _started++;
-    for (;;)
+    while (!_should_exit_task)
     {
         bool updated;
 

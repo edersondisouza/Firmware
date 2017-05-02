@@ -559,11 +559,9 @@ class uploader(object):
         print("If the board does not respond, unplug and re-plug the USB connector.", file=sys.stderr)
 
         try:
-            # try MAVLINK command first
+            # try RTPS and MAVLINK command first
             self.port.flush()
             self.__send(uploader.RTPS_REBOOT0)
-            self.port.flush()
-            time.sleep(0.5)
             self.__send(uploader.MAVLINK_REBOOT_ID1)
             self.__send(uploader.MAVLINK_REBOOT_ID0)
             # then try reboot via NSH
