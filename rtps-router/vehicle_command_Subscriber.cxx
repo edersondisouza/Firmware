@@ -36,21 +36,21 @@ vehicle_command_Subscriber::~vehicle_command_Subscriber() {   Domain::removePart
 bool vehicle_command_Subscriber::init()
 {
     // Create RTPSParticipant
-    
+
     ParticipantAttributes PParam;
     PParam.rtps.builtin.domainId = 0; //MUST BE THE SAME AS IN THE PUBLISHER
     PParam.rtps.builtin.leaseDuration = c_TimeInfinite;
     PParam.rtps.setName("Participant_subscriber"); //You can put the name you want
     mp_participant = Domain::createParticipant(PParam);
     if(mp_participant == nullptr)
-            return false;
-    
+        return false;
+
     //Register the type
-    
+
     Domain::registerType(mp_participant,(TopicDataType*) &myType);
-            
+
     // Create Subscriber
-            
+
     SubscriberAttributes Rparam;
     Rparam.topic.topicKind = NO_KEY;
     Rparam.topic.topicDataType = myType.getName(); //Must be registered before the creation of the subscriber
@@ -77,25 +77,18 @@ void vehicle_command_Subscriber::SubListener::onSubscriptionMatched(Subscriber* 
 
 void vehicle_command_Subscriber::SubListener::onNewDataMessage(Subscriber* sub)
 {
-        // Take data
-        if(sub->takeNextData(&msg, &m_info))
+    // Take data
+    if(sub->takeNextData(&msg, &m_info))
+    {
+        if(m_info.sampleKind == ALIVE)
         {
-            if(m_info.sampleKind == ALIVE)
-            {
-                // Print your structure data here.
-                ++n_msg;
-                std::cout << "Sample received, count=" << n_msg << std::endl;
-                has_msg = true;
+            // Print your structure data here.
+            ++n_msg;
+            std::cout << "Sample received, count=" << n_msg << std::endl;
+            has_msg = true;
 
-            }
         }
-}
-
-void vehicle_command_Subscriber::run()
-{
-    std::cout << "Waiting for Data, press Enter to stop the Subscriber. "<<std::endl;
-    std::cin.ignore();
-    std::cout << "Shutting down the Subscriber." << std::endl;
+    }
 }
 
 bool vehicle_command_Subscriber::hasMsg()

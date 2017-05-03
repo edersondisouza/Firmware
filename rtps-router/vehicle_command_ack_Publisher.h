@@ -30,18 +30,17 @@
 
 using namespace eprosima::fastrtps;
 
-class vehicle_command_ack_Publisher 
+class vehicle_command_ack_Publisher
 {
 public:
     vehicle_command_ack_Publisher();
     virtual ~vehicle_command_ack_Publisher();
     bool init();
-    void run();
     void publish(vehicle_command_ack_* st);
 private:
     Participant *mp_participant;
     Publisher *mp_publisher;
-    
+
     class PubListener : public PublisherListener
     {
     public:

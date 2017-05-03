@@ -38,7 +38,7 @@ vehicle_status_Publisher::~vehicle_status_Publisher() { Domain::removeParticipan
 bool vehicle_status_Publisher::init()
 {
     // Create RTPSParticipant
-    
+
     ParticipantAttributes PParam;
     PParam.rtps.builtin.domainId = 0;
     PParam.rtps.builtin.leaseDuration = c_TimeInfinite;
@@ -46,13 +46,13 @@ bool vehicle_status_Publisher::init()
     mp_participant = Domain::createParticipant(PParam);
     if(mp_participant == nullptr)
         return false;
-    
+
     //Register the type
-    
+
     Domain::registerType(mp_participant,(TopicDataType*) &myType);
-    
+
     // Create Publisher
-    
+
     PublisherAttributes Wparam;
     Wparam.topic.topicKind = NO_KEY;
     Wparam.topic.topicDataType = myType.getName();  //This type MUST be registered
@@ -76,40 +76,6 @@ void vehicle_status_Publisher::PubListener::onPublicationMatched(Publisher* pub,
         n_matched--;
         std::cout << "Publisher unmatched" << std::endl;
     }
-}
-
-void vehicle_status_Publisher::run()
-{
-    while(m_listener.n_matched == 0)
-    {
-        eClock::my_sleep(250); // Sleep 250 ms
-    }
-    
-    // Publication code
-    
-    vehicle_status_ st;
-    
-    /* Initialize your structure here */
-    
-    int msgsent = 0;
-    char ch = 'y';
-    do
-    {
-        if(ch == 'y')
-        {
-            mp_publisher->write(&st);  ++msgsent;
-            std::cout << "Sending sample, count=" << msgsent << ", send another sample?(y-yes,n-stop): ";
-        }
-        else if(ch == 'n')
-        {
-            std::cout << "Stopping execution " << std::endl;
-            break;
-        }
-        else
-        {
-            std::cout << "Command " << ch << " not recognized, please enter \"y/n\":";
-        }
-    }while(std::cin >> ch);
 }
 
 void vehicle_status_Publisher::publish(vehicle_status_* st)

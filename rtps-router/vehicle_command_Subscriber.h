@@ -36,13 +36,12 @@ public:
     vehicle_command_Subscriber();
     virtual ~vehicle_command_Subscriber();
     bool init();
-    void run();
     bool hasMsg();
     vehicle_command_ getMsg();
 private:
     Participant *mp_participant;
     Subscriber *mp_subscriber;
-    
+
     class SubListener : public SubscriberListener
     {
     public:
