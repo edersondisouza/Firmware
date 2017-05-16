@@ -466,6 +466,8 @@ function(px4_generate_messages)
 
 	px4_add_library(${TARGET}
 		${msg_source_files_out}
+		${msg_source_urtps_out}
+		${msg_idl_out}
 		${msg_multi_files_out}
 		${msg_files_out}
 		)
