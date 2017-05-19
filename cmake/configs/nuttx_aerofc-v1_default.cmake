@@ -25,6 +25,7 @@ set(config_module_list
 	modules/sensors
 	# dummy tone alarm
 	modules/dummy
+	drivers/protocol_splitter
 
 	#
 	# System commands
@@ -52,7 +53,7 @@ set(config_module_list
 	modules/commander
 	modules/load_mon
 	modules/navigator
-    #modules/mavlink
+	modules/mavlink
 	modules/land_detector
 
 	#

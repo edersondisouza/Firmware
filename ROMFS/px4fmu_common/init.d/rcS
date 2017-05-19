@@ -653,8 +653,9 @@ then
 		fi
 		if param compare SYS_COMPANION 460800
 		then
-#mavlink start -d ${MAVLINK_COMPANION_DEVICE} -b 460800 -m onboard -r 5000 -x
-			rtps ${MAVLINK_COMPANION_DEVICE} 460800
+			protocol_splitter start ${MAVLINK_COMPANION_DEVICE}
+			mavlink start -d /dev/mavlink -b 460800 -m onboard -r 5000 -x
+			rtps /dev/rtps
 		fi
 		if param compare SYS_COMPANION 157600
 		then
@@ -691,8 +692,9 @@ then
 		fi
 		if param compare SYS_COMPANION 1500000
 		then
-#mavlink start -d ${MAVLINK_COMPANION_DEVICE} -b 1500000 -m onboard -r 10000 -x
-			rtps ${MAVLINK_COMPANION_DEVICE} 1500000
+			protocol_splitter start ${MAVLINK_COMPANION_DEVICE}
+			mavlink start -d /dev/mavlink -b 1500000 -m onboard -r 5000 -x
+			rtps /dev/rtps
 		fi
 	fi
 
