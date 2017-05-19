@@ -127,8 +127,10 @@ int subscribe_topic(const orb_id_t topic)
 int _rtps_main(int argc, char *argv[])
 {
     UART_node uart;
+    uint32_t baudrate = 0;
 
-    uint32_t baudrate = strtoul(argv[3], nullptr, 10);
+    if (argc == 4)
+        strtoul(argv[3], nullptr, 10);
 
     uart.init_uart(argv[2], baudrate);
     pthread_t _reader_thread{};

@@ -45,6 +45,11 @@ int UART_node::init_uart(const char * uart_name, uint32_t baudrate)
         return 1;
     }
 
+    // If using shared UART, no need to set it up
+    if (baudrate == 0) {
+        return m_uart_filestream;
+    }
+
     // Try to set baud rate
     struct termios uart_config;
     int termios_state;
@@ -146,13 +151,13 @@ uint8_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t leng
     if (m_uart_filestream == -1) return 2;
 
     static uint8_t seq = 0;
-    static const char pre[] = ">>>";
+    static char pre[] = ">>>TSL"; // ugly hack in place
     uint8_t len = length;
 
-    write(m_uart_filestream, pre, 3);
-    write(m_uart_filestream, &topic_ID, 1);    // topic_ID
-    write(m_uart_filestream, &seq, 1);    // seq
-    write(m_uart_filestream, &len, 1);
+    pre[3] = topic_ID;
+    pre[4] = seq;
+    pre[5] = len;
+    write(m_uart_filestream, pre, 6);
     write(m_uart_filestream, buffer, length);
 
     seq++;
