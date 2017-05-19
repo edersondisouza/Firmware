@@ -28,7 +28,6 @@ void handle_vehicle_command_ack(int fd, UART_node &uart);
 void handle_vehicle_command(struct reader_data *reader_data, char *buffer);
 
 extern "C" __EXPORT int rtps_main(int argc, char *argv[]);
-extern "C" int mavlink_main(int argc, char *argv[]);
 
 static int _started = 0;
 static bool _should_exit_task = false;
@@ -128,15 +127,8 @@ int subscribe_topic(const orb_id_t topic)
 int _rtps_main(int argc, char *argv[])
 {
     UART_node uart;
-    uint32_t baudrate = strtoul(argv[3], nullptr, 10);
 
-    // lets stop mavlink
-    const char *mavlink_command_stop[] = {
-        "mavlink",
-        "stop-all"
-    };
-    mavlink_main(2, (char **)mavlink_command_stop);
-    usleep(10000000);
+    uint32_t baudrate = strtoul(argv[3], nullptr, 10);
 
     uart.init_uart(argv[2], baudrate);
     pthread_t _reader_thread{};
