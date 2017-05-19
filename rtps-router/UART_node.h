@@ -26,15 +26,17 @@ public:
 
     int init_uart(const char * uart_name, uint32_t baudrate);
     uint8_t close_uart();
-    uint8_t readFromUART(char* topic_ID, uint8_t *seq, char buffer[]);
-    uint8_t writeToUART(const char topic_ID, char buffer[], uint32_t length);
+    int parseRTPSfromUART(char* topic_ID, uint8_t *seq, char buffer[]);
+    int parseMavlinkFromUART(char buffer[], size_t len);
+    int writeRTPStoUART(const char topic_ID, char buffer[], uint32_t length);
+    int writeMavlinkToUART(char buffer[], uint32_t length);
     const size_t max_size = 210;
+    void read(void);
 
 protected:
 
     int m_uart_filestream;
-    char _buf[1024] = {};
+    uint8_t _buf[1024] = {};
     size_t _buf_size = 0;
-
-    void _read(void);
+    static const size_t BUFFER_THRESHOLD = sizeof(_buf) * 0.8;
 };

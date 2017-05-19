@@ -37,16 +37,54 @@
 
 #include <unistd.h>
 
+#include <arpa/inet.h>
+#include <fcntl.h>
 #include <sys/epoll.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 using namespace std;
 using namespace eprosima;
 using namespace eprosima::fastrtps;
 
+static struct sockaddr_in _sockaddr;
+
+static int setup_udp()
+{
+    int fd;
+    const int broadcast_val = 1;
+
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == -1) {
+        cerr << "Could not create socket " << errno << endl;
+        return -1;
+    }
+
+    _sockaddr.sin_family = AF_INET;
+    _sockaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    _sockaddr.sin_port = htons(13800);
+
+    if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &broadcast_val, sizeof(broadcast_val))) {
+        cerr << "Error enabling broadcast" << errno << endl;
+        return -1;
+    }
+
+    if (fcntl(fd, F_SETFL, O_NONBLOCK | FASYNC) < 0) {
+        cerr << "Error setting socket fd as non-blocking " << errno << endl;
+        return -1;
+    }
+
+    return fd;
+}
+
 int main(int argc, char** argv)
 {
     UART_node m_uartNode;
-    char buffer[210];
+    char buffer[512];
+    int udp_fd;
+
+    if ((udp_fd = setup_udp()) < 0)
+        return -1;
 
     // Create subscribers
     vehicle_command_Subscriber vehicle_command_sub;
@@ -71,10 +109,17 @@ int main(int argc, char** argv)
     int fd = m_uartNode.init_uart("/dev/ttyS1", 460800);
     struct epoll_event epev = {};
     epev.events = EPOLLIN;
-    epev.data.ptr = &m_uartNode;
+    epev.data.fd = fd;
 
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &epev) < 0) {
-        std::cerr << "Epoll add fd error " << std::endl;
+        std::cerr << "Epoll add UART fd error " << std::endl;
+        return -1;
+    }
+
+    epev.data.fd = udp_fd;
+
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, udp_fd, &epev) < 0) {
+        std::cerr << "Epoll add UDP fd error " << std::endl;
         return -1;
     }
 
@@ -86,9 +131,19 @@ int main(int argc, char** argv)
         if (r < 0 && errno == EINTR)
             continue;
 
-        if (r != 0) {
+        bool udp = false;
+        bool uart = false;
+        for (int i = 0; i < r; i++) {
+            if (events[i].data.fd == udp_fd)
+                udp = true;
+            if (events[i].data.fd == fd)
+                uart = true;
+        }
+
+        if (uart) {
             uint8_t seq;
-            if (0 != m_uartNode.readFromUART(&topic_ID, &seq, buffer))
+            m_uartNode.read();
+            while (m_uartNode.parseRTPSfromUART(&topic_ID, &seq, buffer) > 0)
             {
                 eprosima::fastcdr::FastBuffer cdrbuffer(buffer, sizeof(buffer));
                 eprosima::fastcdr::Cdr cdr_des(cdrbuffer);
@@ -122,6 +177,36 @@ int main(int argc, char** argv)
                 }
 
             }
+
+            int len;
+            while ((len = m_uartNode.parseMavlinkFromUART(buffer, sizeof(buffer))) > 0) {
+                // Just send it, as is, to mavlink-router
+                int ret = sendto(udp_fd, buffer, len, 0,
+                        (struct sockaddr *)&_sockaddr, sizeof(_sockaddr));
+                // cout << "sent to udp " << ret << " errno " << errno << endl;
+            }
+        }
+
+        // Send mavlink over UART
+        if (udp) {
+            // Assumption: we are running side by side with mavlink-router
+            // So, UDP won't fail.
+            // In the future, mavlink-router and rtps-router should become one
+            // (or at least, share memory for this)
+            socklen_t addrlen = sizeof(sockaddr);
+            ssize_t len = recvfrom(udp_fd, buffer, sizeof(buffer), 0,
+                        (struct sockaddr *)&_sockaddr, &addrlen);
+
+            if (r > 0) {
+                int ret = m_uartNode.writeMavlinkToUART(buffer, len);
+
+                if (ret > 0) {
+                     std::cout << "Wrote mavlink to UART " << ret << std::endl;
+                }
+                else {
+                    std::cout << "Failed to write mavlink to UART " << errno << std::endl;
+                }
+            }
         }
 
         // Send subscribed topics over UART
@@ -133,13 +218,13 @@ int main(int argc, char** argv)
             msg.serialize(scdr);
             auto len = scdr.getSerializedDataLength();
             std::cout << "len: " << len << std::endl;
-            uint8_t ret = m_uartNode.writeToUART((char) VehicleCommandId, scdr.getBufferPointer(), len);
+            int ret = m_uartNode.writeRTPStoUART((char) VehicleCommandId, scdr.getBufferPointer(), len);
 
-            if (ret == 0) {
-                 std::cout << "Wrote to UART " << ret << std::endl;
+            if (ret > 0) {
+                 std::cout << "Wrote RTPS to UART " << ret << std::endl;
             }
             else {
-                std::cout << "Failed to write to UART" << std::endl << std::endl;
+                std::cout << "Failed to write RTPS to UART " << errno << std::endl;
             }
         }
     }while(true);
