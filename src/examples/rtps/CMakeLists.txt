@@ -34,7 +34,7 @@
 px4_add_module(
 	MODULE examples__rtps
 	MAIN rtps
-	STACK_MAIN 2000
+	STACK_MAIN 4000
 	SRCS
 		UART_node.cxx
 		main.cpp
