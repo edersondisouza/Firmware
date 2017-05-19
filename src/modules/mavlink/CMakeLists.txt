@@ -33,8 +33,8 @@
 px4_add_module(
 	MODULE modules__mavlink
 	MAIN mavlink
-	STACK_MAIN 1200
-	STACK_MAX 1500
+	STACK_MAIN 2000
+	STACK_MAX 2500
 	COMPILE_FLAGS
 	SRCS
 		mavlink.c
