@@ -78,6 +78,10 @@ set(config_module_list
 	#
 	modules/logger
 
+    drivers/protocol_splitter
+    examples/micrortps_client
+    lib/micro-CDR
+
 	#
 	# Library modules
 	#
