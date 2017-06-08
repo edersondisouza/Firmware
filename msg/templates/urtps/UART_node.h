@@ -35,7 +35,17 @@ protected:
 
 protected:
 
-    int m_uart_filestream;
-    uint32_t rx_buff_pos;
-    char rx_buffer[1024];
+    int m_uart_filestream = -1;
+    uint32_t rx_buff_pos = 0;
+    char rx_buffer[1024] = {};
+
+private:
+    struct __attribute__((packed)) Header {
+        char marker[3];
+        uint8_t topic_ID;
+        uint8_t seq;
+        uint8_t payload_len;
+        uint8_t crc_h;
+        uint8_t crc_l;
+    };
 };
