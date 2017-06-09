@@ -1,0 +1,6 @@
+struct vehicle_command_ack_
+{
+	unsigned short command;
+	octet result;
+
+}; // struct vehicle_command_ack_
