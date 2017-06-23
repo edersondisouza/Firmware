@@ -1,4 +1,4 @@
-// Copyright 2016 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+// Copyright 2017 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <string>
+#include <stdio.h>
 #include <errno.h>
 
 #include "UART_node.h"
@@ -180,7 +181,7 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], char rx_buffe
     if (msg_start_pos > last_valid_pos - 2)
     {
         //printf("start not founded, pos %u\n", last_valid_pos);
-        printf("                                 (↓↓ %u)\n", last_valid_pos - 1);
+        printf("                                 (↓↓ %lu)\n", (unsigned long)(last_valid_pos - 1));
         rx_buffer[0] = rx_buffer[last_valid_pos - 1];
         rx_buffer[1] = rx_buffer[last_valid_pos];
         rx_buff_pos = 2;
@@ -206,7 +207,7 @@ int16_t UART_node::readFromUART(char* topic_ID, char out_buffer[], char rx_buffe
                     msg_len_pos, rx_buffer[msg_len_pos], buff_total_len-1, uint32_t(msg_len_pos + uint8_t(rx_buffer[msg_len_pos]) + 2), uint32_t(buff_total_len - 1));
         }*/
 
-        printf("                                 (↓ %u)\n", msg_start_pos);
+        printf("                                 (↓ %lu)\n", (unsigned long)msg_start_pos);
         memmove(rx_buffer, rx_buffer + msg_start_pos, last_valid_pos - msg_start_pos + 1);
         rx_buff_pos = last_valid_pos - msg_start_pos + 1;
         return 0;
@@ -268,6 +269,9 @@ int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t leng
 
     int ret = 0;
     dprintf(m_uart_filestream, ">>>%c%c%c", topic_ID, seq, (char)length);
+    //char aux_buffer[8] = {'>', '>', '>', topic_ID, seq};
+    //write(m_uart_filestream, aux_buffer, 6);
+
     ret = write(m_uart_filestream, buffer, length);
 
     if (ret != length)
@@ -279,12 +283,16 @@ int16_t UART_node::writeToUART(const char topic_ID, char buffer[], uint32_t leng
         }
         else
         {
-            printf("                               => Writed '%d' != length(%u) error '%d'\n", ret, length, errsv);
+            printf("                               => Writed '%d' != length(%lu) error '%d'\n", ret, (unsigned long)length, errsv);
         }
         return ret;
     }
 
     dprintf(m_uart_filestream, "%c%c", uint8_t((crc >> 8) & 0x00FF), uint8_t(crc & 0x00FF));
+    //aux_buffer[0] = uint8_t((crc >> 8) & 0x00FF);
+    //aux_buffer[1] = uint8_t(crc & 0x00FF);
+    //write(m_uart_filestream, aux_buffer, 2);
+
 
     /*printf(">>>%hhd %c %c|", topic_ID, seq, (char)length);
     for (int i = 0; i < length; ++i)printf(" %hhu", buffer[i]);
